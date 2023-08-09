@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <string>
+#include <utility>
 #include <vector>
 
 #define LIKELY(x) __builtin_expect(!!(x), 1)
@@ -26,6 +27,15 @@ class SwiftJson {
         strSizeStack.clear();
         strStack.clear();
     };
+    SwiftJson &operator=(SwiftJson &&other) {
+        if (this == &other) return *this;  // 防止自赋值
+        totalSize = other.totalSize;
+        needComma = other.needComma;
+        strStack = std::move(other.strStack);
+        strSizeStack = std::move(other.strSizeStack);
+        other.totalSize = 0;  // 置源对象为有效但未定义的状态
+        return *this;
+    }
     inline void append(const char *cstr, int size) {
         strSizeStack.emplace_back(size);
         strStack.emplace_back(cstr);
@@ -38,6 +48,28 @@ class SwiftJson {
     inline void append(const char (&cstr)[N]) {
         append(cstr, N - 1);
     }
+
+   public:
+    inline SwiftJson &operator+=(const std::string &str) {
+        append(str);
+        return *this;
+    }
+    template <std::size_t N>
+    inline SwiftJson &operator+=(const char (&cstr)[N]) {
+        append(cstr);
+        return *this;
+    }
+    inline SwiftJson &&operator+(const std::string &str) {
+        append(str);
+        return std::move(*this);
+    }
+    template <std::size_t N>
+    inline SwiftJson &&operator+(const char (&cstr)[N]) {
+        append(cstr);
+        return std::move(*this);
+    }
+
+   public:
     inline void start() { append(FIELD_START); }
     inline void end() { append(FIELD_END); }
     template <std::size_t N>

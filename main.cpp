@@ -449,6 +449,26 @@ void *test_make_swift_fst(void *args) {
     return nullptr;
 }
 
+void *test_make_swift_oop(void *args) {
+    SwiftJson json;
+
+    json.start();
+    for (int i = 0; i < REPEAT_TIMES; i++) {
+        json + R"(, "sendHostAddress":")" + ip + R"(", ")";
+        json + key + R"(:"1a-2b-3c-4d-5e-6f)" + R"(")";
+        // json += ip;
+        // json += R"(", ")";
+        // json += key;
+        // json += R"(:"1a-2b-3c-4d-5e-6f)";
+        // json += R"(")";
+    }
+    json.end();
+
+    std::string s = json.toString();
+    // std::cout << s << std::endl;
+    return nullptr;
+}
+
 std::string sep_str;
 
 void sep1() {
@@ -577,6 +597,7 @@ int main() {
         TestFunction("make_ss", test_make_ss),
         TestFunction("make_swift", test_make_swift),
         TestFunction("make_swift_fst", test_make_swift_fst),
+        TestFunction("make_swift_oop", test_make_swift_oop),
         TestFunction("make_swift_sep", test_make_swift_sep),
     };
 
@@ -584,4 +605,12 @@ int main() {
         multi_thread_test(nf);
     }
     print_result(string_funcs, string_funcs.size());
+
+
+    SwiftJson json;
+    std::string s;
+    std::string a = "123";
+    json + "abc" + a;
+    s = json.toString();
+    std::cout << s << std::endl;
 }
