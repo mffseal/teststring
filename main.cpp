@@ -15,12 +15,14 @@
 
 #include "SwiftJson.h"
 #include "fast_string_concatenator.hpp"
+#include "mystring.h"
 #include "sonic/dom/generic_document.h"
 #include "sonic/sonic.h"
 #include "table_str.hh"
+#include "Buffer.hpp"
 
 #define THREAD_COUNT 1
-#define REPEAT_TIMES 1000
+#define REPEAT_TIMES 10
 
 template <typename... Args>
 constexpr auto concat(Args... args) {
@@ -521,11 +523,12 @@ void *test_append_res(void *args) {
 
 void *test_append_ptr(void *args) {
     std::string s;
-    // s.reserve((str1.length() + str2.length() + str3.length() + sizeof(TSTR1) +
+    // s.reserve((str1.length() + str2.length() + str3.length() + sizeof(TSTR1)
+    // +
     //            sizeof(TSTR2) + sizeof(TSTR3)) *
     //           REPEAT_TIMES);
     const char *strs[1000] = {TSTR1,       str1.data(), TSTR2,
-                          str2.data(), TSTR3,       str3.data()};
+                              str2.data(), TSTR3,       str3.data()};
     for (int i = 0; i < REPEAT_TIMES; i++) {
         for (int j = 0; j < 6; ++j) {
             s.append(strs[j]);
@@ -556,61 +559,82 @@ void multi_thread_test(TestFunction &tf) {
     tf.overhead = elapsed.count();
 }
 
+int getChineseCharCount(const std::string &str) {
+    int count = 0;
+    for (unsigned char c : str) {
+        if (c >= 0x80)  // UTF-8 中文字符的第一个字节的最高位为1
+            count++;
+    }
+    return count / 3;  // UTF-8 编码下，每个中文字符占用3个字节
+}
+
 void print_result(std::vector<TestFunction> &funcs, unsigned long long size) {
     std::sort(funcs.begin(), funcs.end(),
               [](const TestFunction &a, const TestFunction &b) {
                   return a.overhead < b.overhead;
               });
     for (int i = 0; i < size; ++i) {
-        std::cout << std::setw(16) << std::setfill('-') << std::left
-                  << funcs[i].name << std::setw(16) << std::right
+        int chineseCharCount = getChineseCharCount(funcs[i].name);
+        std::cout << std::setw(16 + chineseCharCount) << std::setfill('-')
+                  << std::left << funcs[i].name << std::setw(16) << std::right
                   << "cost: " << funcs[i].overhead << "\t ms" << std::endl;
     }
 }
 
 int main() {
     std::vector<TestFunction> string_funcs = {
-        // TestFunction("stringstream", test_stringstream),
-        // TestFunction("fmt", test_fmt),
-        // TestFunction("fmt_buf", test_fmt_buf),
-        // TestFunction("snprintf", test_snprintf),
-        // TestFunction("append", test_append),
-        // TestFunction("append_res", test_append_res),
-        // TestFunction("append_ptr", test_append_ptr),
-        // TestFunction("append_obo", test_append_obo),
-        // TestFunction("append_short", test_append_short),
-        // TestFunction("add", test_add),
-        // TestFunction("add_obo", test_add_obo),
-        // TestFunction("add_short", test_add_short),
+        TestFunction("stringstream", test_stringstream),
+        TestFunction("fmt", test_fmt), TestFunction("fmt_buf", test_fmt_buf),
+        TestFunction("snprintf", test_snprintf),
+        TestFunction("append", test_append),
+        TestFunction("append_reserve", test_append_res),
+        TestFunction("append_批量", test_append_ptr),
+        TestFunction("append_模板封装", test_append_obo),
+        TestFunction("append_短多次", test_append_short),
+        TestFunction("add", test_add),
+        TestFunction("add_模板封装", test_add_obo),
+        TestFunction("add_短多次", test_add_short),
         // TestFunction("ternary_indirect", test_ternary_indirect),
         // TestFunction("ternary_direct", test_ternary_direct),
         // TestFunction("assign", test_assign),
         // TestFunction("noassign", test_noappend),
-        // TestFunction("sonic", test_sonic),
-        // TestFunction("sonic_obo", test_sonic_obo),
-        // TestFunction("fast_const", test_fast_concat),
-        // TestFunction("rope", test_rope),
-        // TestFunction("tablestring", test_tablestring),
-        // TestFunction("swiftjson", test_swiftjson),
-        TestFunction("make", test_make),
-        TestFunction("make_pp", test_make_pp),
-        TestFunction("make_ss", test_make_ss),
-        TestFunction("make_swift", test_make_swift),
-        TestFunction("make_swift_fst", test_make_swift_fst),
-        TestFunction("make_swift_oop", test_make_swift_oop),
-        TestFunction("make_swift_sep", test_make_swift_sep),
+        TestFunction("sonic", test_sonic),
+        TestFunction("sonic_短多次", test_sonic_obo),
+        TestFunction("fast_const", test_fast_concat),
+        TestFunction("rope", test_rope),
+        TestFunction("tablestring", test_tablestring),
+        TestFunction("swiftjson", test_swiftjson),
+        // TestFunction("make", test_make),
+        // TestFunction("make_pp", test_make_pp),
+        // TestFunction("make_ss", test_make_ss),
+        // TestFunction("make_swift", test_make_swift),
+        // TestFunction("make_swift_fst", test_make_swift_fst),
+        // TestFunction("make_swift_oop", test_make_swift_oop),
+        // TestFunction("make_swift_sep", test_make_swift_sep),
     };
 
-    for (TestFunction &nf : string_funcs) {
-        multi_thread_test(nf);
-    }
-    print_result(string_funcs, string_funcs.size());
+    // for (TestFunction &nf : string_funcs) {
+    //     multi_thread_test(nf);
+    // }
+    // print_result(string_funcs, string_funcs.size());
 
+    // SwiftJson json;
+    // std::string s;
+    // std::string a = "123";
+    // json + "abc" + a;
+    // s = json.toString();
+    // std::cout << s << std::endl;
 
-    SwiftJson json;
-    std::string s;
-    std::string a = "123";
-    json + "abc" + a;
-    s = json.toString();
-    std::cout << s << std::endl;
+    // MyString str("Hello, ");
+    // str += "World!";
+    // str.append(" How are you?");
+    // std::cout << str.c_str() << std::endl;  // 输出 "Hello, World! How are you?"
+
+    std::string s = "abcdef";
+    Fundation::Buffer<char> buf(8);
+    buf.append("123", 3);
+    buf.append(s.data(), s.length());
+    buf.append('\n');
+    std::string ss(buf.begin(), buf.end());
+    std::cout << ss << std::endl;
 }
