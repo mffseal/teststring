@@ -20,9 +20,10 @@
 #include "sonic/sonic.h"
 #include "table_str.hh"
 #include "Buffer.hpp"
+#include "StringAppendBuffer.hpp"
 
 #define THREAD_COUNT 1
-#define REPEAT_TIMES 10
+#define REPEAT_TIMES 1500
 
 template <typename... Args>
 constexpr auto concat(Args... args) {
@@ -374,6 +375,31 @@ void *test_swiftjson(void *args) {
     return nullptr;
 }
 
+void *test_mybuffer(void *args) {
+    Fundation::Buffer<char> buf(6000);
+    for (int i = 0; i < REPEAT_TIMES; i++) {
+        buf.append(str1.data(), str1.length());
+        buf.append(TSTR1, sizeof(TSTR1) - 1);
+        buf.append(str2.data(), str2.length());
+        buf.append(TSTR2, sizeof(TSTR2) - 1);
+        buf.append(str3.data(), str3.length());
+        buf.append(TSTR3, sizeof(TSTR3) -1 );
+    }
+    std::string s(buf.begin(), buf.end());
+    // std::cout<<s<<std::endl;
+    return nullptr;
+}
+
+void *test_StringAppendBuffer(void *args) {
+    StringAppendBuffer sab(256);
+    for (int i = 0; i < REPEAT_TIMES; i++) {
+        sab << str1 << TSTR1 << str2 << TSTR2 << str3 << TSTR3;
+    }
+    std::string s = sab.toString();
+    // std::cout<<s<<std::endl;
+    return nullptr;
+}
+
 std::string ip = "192.168.1.1";
 std::string key = "machineCode";
 
@@ -604,6 +630,8 @@ int main() {
         TestFunction("rope", test_rope),
         TestFunction("tablestring", test_tablestring),
         TestFunction("swiftjson", test_swiftjson),
+        TestFunction("mybuffer", test_mybuffer),
+        TestFunction("StrAppendBuf", test_StringAppendBuffer),
         // TestFunction("make", test_make),
         // TestFunction("make_pp", test_make_pp),
         // TestFunction("make_ss", test_make_ss),
@@ -613,10 +641,10 @@ int main() {
         // TestFunction("make_swift_sep", test_make_swift_sep),
     };
 
-    // for (TestFunction &nf : string_funcs) {
-    //     multi_thread_test(nf);
-    // }
-    // print_result(string_funcs, string_funcs.size());
+    for (TestFunction &nf : string_funcs) {
+        multi_thread_test(nf);
+    }
+    print_result(string_funcs, string_funcs.size());
 
     // SwiftJson json;
     // std::string s;
@@ -630,11 +658,25 @@ int main() {
     // str.append(" How are you?");
     // std::cout << str.c_str() << std::endl;  // 输出 "Hello, World! How are you?"
 
-    std::string s = "abcdef";
-    Fundation::Buffer<char> buf(8);
-    buf.append("123", 3);
-    buf.append(s.data(), s.length());
-    buf.append('\n');
-    std::string ss(buf.begin(), buf.end());
-    std::cout << ss << std::endl;
+    // std::string s = "abcdef";
+    // Fundation::Buffer<char> buf(1);
+    // buf.append("123", 3);
+    // buf.append(s.data(), s.length());
+    // buf.append('\n');
+    // std::string ss(buf.begin(), buf.end());
+    // std::cout << ss << std::endl;
+
+    // StringAppendBuffer sab;
+    // sab << "123" << "45666" << std::string("abcdef");
+    // std::cout << sab.toString() << std::endl;
+    
+    // StringAppendBuffer sab2;
+    // sab2 = sab;
+    // std::cout << sab2.toString() << std::endl;
+
+    // StringAppendBuffer sab3;
+    // sab3 << sab2;
+    // std::cout << sab3.toString() << std::endl;
+    // sab3 << StringAppendBuffer("xxxxxx");
+    // std::cout << sab3.toString() << std::endl;
 }

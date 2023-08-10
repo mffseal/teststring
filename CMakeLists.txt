@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -g")
 add_compile_options(-mavx2)
 add_compile_options(-mpclmul)
 
-add_executable(teststring main.cpp table_str.cc SwiftJson.cpp mystring.cpp Buffer.hpp)
+add_executable(teststring main.cpp table_str.cc SwiftJson.cpp mystring.cpp Buffer.hpp StringAppendBuffer.hpp)
 
 add_subdirectory(fmt)
 target_link_libraries(teststring PRIVATE fmt::fmt)
